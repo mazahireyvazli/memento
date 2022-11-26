@@ -78,7 +78,6 @@ type MementoConfig struct {
 	ShardNum       int
 	ShardCapHint   int
 	EntryExpiresIn time.Duration
-	Hasher         Hash64[string]
 }
 
 func NewMemento[KeyType Hashable, ValueType []byte](c *MementoConfig) (*Memento[KeyType, ValueType], error) {
@@ -116,10 +115,7 @@ func NewMemento[KeyType Hashable, ValueType []byte](c *MementoConfig) (*Memento[
 		clock:          clock,
 		donech:         make(chan struct{}),
 		entryExpiresIn: entryExpiresIn,
-	}
-
-	if memento.hasher == nil {
-		memento.hasher = &Fnv1_64[KeyType]{}
+		hasher:         &Fnv1_64[KeyType]{},
 	}
 
 	for i := 0; i < len(memento.shards); i++ {
