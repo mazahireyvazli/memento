@@ -6,28 +6,23 @@ import (
 )
 
 type shard[KeyType uint64, ValueType []byte] struct {
-	mu    sync.RWMutex
-	data  map[KeyType]ValueType
-	clock *EinsteinClock
+	mu   sync.RWMutex
+	data map[KeyType]ValueType
 }
 
 func newShard[KeyType uint64, ValueType []byte](
 	capHint int,
-	clock *EinsteinClock,
 ) *shard[KeyType, ValueType] {
 	return &shard[KeyType, ValueType]{
-		data:  make(map[KeyType]ValueType, capHint),
-		clock: clock,
+		data: make(map[KeyType]ValueType, capHint),
 	}
 }
 
-func (t *shard[KeyType, ValueType]) createEntryFromVal(v ValueType) ValueType {
+func (t *shard[KeyType, ValueType]) createEntryFromVal(v ValueType, currentTs uint64) ValueType {
 	var bufferLen = timestampLen + len(v)
 	var buffer = make(ValueType, bufferLen)
 
-	now := t.clock.Seconds()
-
-	binary.LittleEndian.PutUint64(buffer, now)
+	binary.LittleEndian.PutUint64(buffer, currentTs)
 	copy(buffer[timestampLen:], v)
 
 	return buffer[:bufferLen]
@@ -56,10 +51,10 @@ func (t *shard[KeyType, ValueType]) get(k KeyType) (v ValueType, found bool) {
 	return v, found
 }
 
-func (t *shard[KeyType, ValueType]) Set(k KeyType, v ValueType) {
+func (t *shard[KeyType, ValueType]) Set(k KeyType, v ValueType, currentTs uint64) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.set(k, t.createEntryFromVal(v))
+	t.set(k, t.createEntryFromVal(v, currentTs))
 }
 
 func (t *shard[KeyType, ValueType]) set(k KeyType, v ValueType) {

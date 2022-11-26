@@ -59,7 +59,8 @@ func (t *Memento[KeyType, ValueType]) getShard(hashedKey uint64) *shard[uint64, 
 
 func (t *Memento[KeyType, ValueType]) Set(k KeyType, v ValueType) {
 	hashedKey := t.hasher.Sum64(k)
-	t.getShard(hashedKey).Set(hashedKey, v)
+	currentTs := t.clock.Seconds()
+	t.getShard(hashedKey).Set(hashedKey, v, currentTs)
 }
 
 func (t *Memento[KeyType, ValueType]) Get(k KeyType) (ValueType, bool) {
@@ -107,19 +108,17 @@ func NewMemento[KeyType Hashable, ValueType []byte](c *MementoConfig) (*Memento[
 	}
 	shardNum = uint64(1 << int(math.Ceil(math.Log2(float64(c.ShardNum)))))
 
-	var clock = NewClock()
-
 	memento := &Memento[KeyType, ValueType]{
 		shards:         make([]*shard[uint64, []byte], shardNum),
 		shardMask:      shardNum - 1,
-		clock:          clock,
+		clock:          NewClock(),
 		donech:         make(chan struct{}),
 		entryExpiresIn: entryExpiresIn,
 		hasher:         &Fnv1_64[KeyType]{},
 	}
 
 	for i := 0; i < len(memento.shards); i++ {
-		memento.shards[i] = newShard(capHint, clock)
+		memento.shards[i] = newShard(capHint)
 	}
 
 	memento.cleanShards()
