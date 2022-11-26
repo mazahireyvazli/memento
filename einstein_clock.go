@@ -15,19 +15,19 @@ func (c *EinsteinClock) Seconds() uint64 {
 	return c.seconds
 }
 
-func (c *EinsteinClock) UpdateTime() {
-	c.seconds = uint64(time.Now().Unix())
+func (c *EinsteinClock) updateTime(t time.Time) {
+	c.seconds = uint64(t.Unix())
 }
 
-func (c *EinsteinClock) TimeUpdater() {
+func (c *EinsteinClock) timeUpdater() {
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-ticker.C:
-				c.UpdateTime()
+			case t := <-ticker.C:
+				c.updateTime(t)
 			case <-c.donech:
 				return
 			}
@@ -41,7 +41,7 @@ func NewClock() (clock *EinsteinClock) {
 		donech:  make(chan struct{}),
 	}
 
-	clock.TimeUpdater()
+	clock.timeUpdater()
 
 	return clock
 }
