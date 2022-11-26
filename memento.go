@@ -35,7 +35,7 @@ func (t *Memento[KeyType, ValueType]) Close() {
 
 func (t *Memento[KeyType, ValueType]) cleanShards() {
 	go func() {
-		ticker := time.NewTicker(t.entryExpiresIn)
+		ticker := time.NewTicker(t.entryExpiresIn / 2)
 		defer ticker.Stop()
 
 		for {
