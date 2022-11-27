@@ -1,9 +1,12 @@
 package memento
 
-import "time"
+import (
+	"sync/atomic"
+	"time"
+)
 
 type EinsteinClock struct {
-	seconds uint64
+	seconds atomic.Uint64
 	donech  chan struct{}
 }
 
@@ -12,11 +15,11 @@ func (c *EinsteinClock) Close() {
 }
 
 func (c *EinsteinClock) Seconds() uint64 {
-	return c.seconds
+	return c.seconds.Load()
 }
 
 func (c *EinsteinClock) updateTime(t time.Time) {
-	c.seconds = uint64(t.Unix())
+	c.seconds.Store(uint64(t.Unix()))
 }
 
 func (c *EinsteinClock) timeUpdater() {
@@ -37,10 +40,9 @@ func (c *EinsteinClock) timeUpdater() {
 
 func NewClock() (clock *EinsteinClock) {
 	clock = &EinsteinClock{
-		seconds: uint64(time.Now().Unix()),
-		donech:  make(chan struct{}),
+		donech: make(chan struct{}),
 	}
-
+	clock.updateTime(time.Now())
 	clock.timeUpdater()
 
 	return clock
