@@ -9,11 +9,12 @@ import (
 )
 
 const maxID = 1_000
+const valueSize = 100 // in bytes
 
 var config = &MementoConfig{
 	ShardNum:       1 << 10,
 	ShardCapHint:   1 << 16,
-	EntryExpiresIn: time.Second * 600,
+	EntryExpiresIn: time.Minute * 1,
 }
 
 func key(i int) string {
@@ -23,7 +24,7 @@ func parallelKey(threadID int, counter int) string {
 	return fmt.Sprintf("key-%04d-%06d", threadID, counter)
 }
 func value() []byte {
-	return make([]byte, 128)
+	return make([]byte, valueSize)
 }
 
 func init() {
