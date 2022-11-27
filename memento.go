@@ -89,7 +89,7 @@ func NewMemento[KeyType Hashable, ValueType []byte](c *MementoConfig) (*Memento[
 	if capHint > maxShardCap {
 		capHint = maxShardCap
 	}
-	capHint = 1 << int(math.Ceil(math.Log2(float64(c.ShardCapHint))))
+	capHint = 1 << int(math.Ceil(math.Log2(float64(capHint))))
 
 	var entryExpiresIn = c.EntryExpiresIn
 	if entryExpiresIn < minExpiresIn {
@@ -106,7 +106,7 @@ func NewMemento[KeyType Hashable, ValueType []byte](c *MementoConfig) (*Memento[
 	if shardNum > maxShardNum {
 		shardNum = maxShardNum
 	}
-	shardNum = uint64(1 << int(math.Ceil(math.Log2(float64(c.ShardNum)))))
+	shardNum = uint64(1 << int(math.Ceil(math.Log2(float64(shardNum)))))
 
 	memento := &Memento[KeyType, ValueType]{
 		shards:         make([]*shard[uint64, []byte], shardNum),
