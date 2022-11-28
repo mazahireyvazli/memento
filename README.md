@@ -49,12 +49,12 @@ goos: linux
 goarch: amd64
 pkg: github.com/mazahireyvazli/memento
 cpu: AMD Ryzen 5 4500U with Radeon Graphics
-BenchmarkSet-6                  50500500               506.7 ns/op           264 B/op          3 allocs/op
-BenchmarkGet-6                  50500500               387.1 ns/op            23 B/op          1 allocs/op
-BenchmarkParallelSet-6          50500500               166.9 ns/op           173 B/op          3 allocs/op
-BenchmarkParallelGet-6          50500500               76.43 ns/op            23 B/op          1 allocs/op
+BenchmarkSet-6                  50500500               474.2 ns/op           184 B/op          3 allocs/op
+BenchmarkGet-6                  50500500               481.5 ns/op            23 B/op          1 allocs/op
+BenchmarkParallelSet-6          50500500               163.5 ns/op            94 B/op          3 allocs/op
+BenchmarkParallelGet-6          50500500               76.59 ns/op            23 B/op          1 allocs/op
 PASS
-ok      github.com/mazahireyvazli/memento       113.139s
+ok      github.com/mazahireyvazli/memento       111.946s
 ```
 
 ---
@@ -71,10 +71,10 @@ goos: linux
 goarch: amd64
 pkg: github.com/mazahireyvazli/memento
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkSet-8                  50500500               364.2 ns/op           264 B/op          3 allocs/op
-BenchmarkGet-8                  50500500               280.3 ns/op            23 B/op          1 allocs/op
-BenchmarkParallelSet-8          50500500               88.09 ns/op           171 B/op          3 allocs/op
-BenchmarkParallelGet-8          50500500               47.02 ns/op            23 B/op          1 allocs/op
+BenchmarkSet-8                  50500500               352.5 ns/op           232 B/op          3 allocs/op
+BenchmarkGet-8                  50500500               281.9 ns/op            23 B/op          1 allocs/op
+BenchmarkParallelSet-8          50500500               87.92 ns/op           142 B/op          3 allocs/op
+BenchmarkParallelGet-8          50500500               44.28 ns/op            23 B/op          1 allocs/op
 PASS
-ok      github.com/mazahireyvazli/memento       75.500s
+ok      github.com/mazahireyvazli/memento       73.628s
 ```
