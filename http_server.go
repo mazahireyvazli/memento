@@ -21,7 +21,7 @@ func RunServer(c *MementoServerConfig) error {
 		return err
 	}
 
-	r := gin.Default()
+	r := gin.New()
 	apiV1 := r.Group("/api/v1")
 
 	apiV1.GET("/cache/:key", func(c *gin.Context) {
