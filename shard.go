@@ -82,9 +82,9 @@ func (t *shard[KeyType, ValueType]) set(i KeyType, e ValueType, exists bool) {
 }
 
 func (t *shard[KeyType, ValueType]) Delete(k KeyType) {
-	t.mu.RLock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	i, found := t.data[k]
-	t.mu.RUnlock()
 
 	if found {
 		t.delete(i)
@@ -102,8 +102,8 @@ func (t *shard[KeyType, ValueType]) length() int {
 }
 
 func (t *shard[KeyType, ValueType]) ShardCleaner(currentTs uint64, entryExpiresIn uint64) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	for _, entryIndex := range t.data {
 		entry := t.entries[entryIndex]
