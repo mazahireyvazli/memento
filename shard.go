@@ -6,15 +6,17 @@ import (
 )
 
 type shard[KeyType uint64, ValueType []byte] struct {
-	mu   sync.RWMutex
-	data map[KeyType]ValueType
+	mu      sync.RWMutex
+	data    map[KeyType]KeyType
+	entries []ValueType
 }
 
 func newShard[KeyType uint64, ValueType []byte](
 	capHint int,
 ) *shard[KeyType, ValueType] {
 	return &shard[KeyType, ValueType]{
-		data: make(map[KeyType]ValueType, capHint),
+		data:    make(map[KeyType]KeyType, capHint),
+		entries: make([]ValueType, 0, capHint),
 	}
 }
 
@@ -38,37 +40,59 @@ func (t *shard[KeyType, ValueType]) retrieveTimestampFromEntry(entry ValueType) 
 
 func (t *shard[KeyType, ValueType]) Get(k KeyType) (v ValueType, found bool) {
 	t.mu.RLock()
-	defer t.mu.RUnlock()
-	entry, found := t.get(k)
-	if !found {
-		return nil, found
+	i, found := t.data[k]
+	t.mu.RUnlock()
+
+	if found {
+		v, found = t.get(i)
 	}
-	return t.retrieveValFromEntry(entry), found
+	return v, found
 }
 
-func (t *shard[KeyType, ValueType]) get(k KeyType) (v ValueType, found bool) {
-	v, found = t.data[k]
+func (t *shard[KeyType, ValueType]) get(i KeyType) (v ValueType, found bool) {
+	entry := t.entries[i]
+	if entry != nil {
+		v = t.retrieveValFromEntry(entry)
+		found = true
+	}
 	return v, found
 }
 
 func (t *shard[KeyType, ValueType]) Set(k KeyType, v ValueType, currentTs uint64) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.set(k, t.createEntryFromVal(v, currentTs))
+
+	entryIndex, found := t.data[k]
+	entry := t.createEntryFromVal(v, currentTs)
+
+	if found {
+		t.set(entryIndex, entry, true)
+	} else {
+		t.set(k, entry, false)
+	}
 }
 
-func (t *shard[KeyType, ValueType]) set(k KeyType, v ValueType) {
-	t.data[k] = v
+func (t *shard[KeyType, ValueType]) set(i KeyType, e ValueType, exists bool) {
+	if exists {
+		t.entries[i] = e
+	} else {
+		t.data[i] = KeyType(len(t.entries))
+		t.entries = append(t.entries, e)
+	}
 }
 
 func (t *shard[KeyType, ValueType]) Delete(k KeyType) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.delete(k)
+	t.mu.RLock()
+	i, found := t.data[k]
+	t.mu.RUnlock()
+
+	if found {
+		t.delete(i)
+	}
 }
 
-func (t *shard[KeyType, ValueType]) delete(k KeyType) {
-	delete(t.data, k)
+func (t *shard[KeyType, ValueType]) delete(i KeyType) {
+	t.entries[i] = nil
 }
 
 func (t *shard[KeyType, ValueType]) length() int {
@@ -78,14 +102,17 @@ func (t *shard[KeyType, ValueType]) length() int {
 }
 
 func (t *shard[KeyType, ValueType]) ShardCleaner(currentTs uint64, entryExpiresIn uint64) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 
-	for k, entry := range t.data {
-		entryTs := t.retrieveTimestampFromEntry(entry)
+	for _, entryIndex := range t.data {
+		entry := t.entries[entryIndex]
+		if entry != nil {
+			entryTs := t.retrieveTimestampFromEntry(entry)
 
-		if currentTs-entryTs > entryExpiresIn {
-			t.delete(k)
+			if currentTs-entryTs > entryExpiresIn {
+				t.delete(entryIndex)
+			}
 		}
 	}
 }
