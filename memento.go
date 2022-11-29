@@ -78,7 +78,7 @@ func (t *Memento[KeyType, ValueType]) Delete(k KeyType) {
 func (t *Memento[KeyType, ValueType]) Length() int {
 	var total int
 	for _, shard := range t.shards {
-		total += shard.length()
+		total += shard.Length()
 	}
 
 	return total

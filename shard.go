@@ -9,6 +9,7 @@ type shard[KeyType uint64, ValueType []byte] struct {
 	mu      sync.RWMutex
 	data    map[KeyType]KeyType
 	entries []ValueType
+	length  int
 }
 
 func newShard[KeyType uint64, ValueType []byte](
@@ -78,6 +79,7 @@ func (t *shard[KeyType, ValueType]) set(i KeyType, e ValueType, exists bool) {
 	} else {
 		t.data[i] = KeyType(len(t.entries))
 		t.entries = append(t.entries, e)
+		t.length++
 	}
 }
 
@@ -92,11 +94,14 @@ func (t *shard[KeyType, ValueType]) Delete(k KeyType) {
 }
 
 func (t *shard[KeyType, ValueType]) delete(i KeyType) {
-	t.entries[i] = nil
+	if t.entries[i] != nil {
+		t.entries[i] = nil
+		t.length--
+	}
 }
 
-func (t *shard[KeyType, ValueType]) length() int {
-	return len(t.data)
+func (t *shard[KeyType, ValueType]) Length() int {
+	return t.length
 }
 
 func (t *shard[KeyType, ValueType]) ShardCleaner(currentTs uint64, entryExpiresIn uint64) {
