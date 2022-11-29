@@ -38,6 +38,10 @@ func BenchmarkSet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		memcache.Set(key(i), value())
 	}
+
+	if memcache.Length() != b.N {
+		b.Fatal("number of items in cache should equal to", b.N)
+	}
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -46,6 +50,10 @@ func BenchmarkGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		memcache.Set(key(i), value())
+	}
+
+	if memcache.Length() != b.N {
+		b.Fatal("number of items in cache should equal to", b.N)
 	}
 
 	b.ResetTimer()
