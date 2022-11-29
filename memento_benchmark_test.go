@@ -81,9 +81,13 @@ func BenchmarkParallelGet(b *testing.B) {
 	var memcache, _ = NewMemento[string](config)
 	defer memcache.Close()
 
-	for i := 0; i < b.N; i++ {
-		memcache.Set(key(i), value())
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			memcache.Set(key(counter), value())
+			counter = counter + 1
+		}
+	})
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
