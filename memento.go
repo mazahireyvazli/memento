@@ -75,6 +75,15 @@ func (t *Memento[KeyType, ValueType]) Delete(k KeyType) {
 	t.getShard(hashedKey).Delete(hashedKey)
 }
 
+func (t *Memento[KeyType, ValueType]) Length() int {
+	var total int
+	for _, shard := range t.shards {
+		total += shard.length()
+	}
+
+	return total
+}
+
 type MementoConfig struct {
 	ShardNum       int
 	ShardCapHint   int

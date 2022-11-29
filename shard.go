@@ -71,6 +71,10 @@ func (t *shard[KeyType, ValueType]) delete(k KeyType) {
 	delete(t.data, k)
 }
 
+func (t *shard[KeyType, ValueType]) length() int {
+	return len(t.data)
+}
+
 func (t *shard[KeyType, ValueType]) ShardCleaner(currentTs uint64, entryExpiresIn uint64) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
