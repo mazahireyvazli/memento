@@ -105,10 +105,12 @@ func (t *shard[KeyType, ValueType]) ShardCleaner(currentTs uint64, entryExpiresI
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	for _, entryIndex := range t.data {
-		entry := t.entries[entryIndex]
-		if entry != nil {
-			entryTs := t.retrieveTimestampFromEntry(entry)
+	var length = KeyType(len(t.entries))
+	var entryIndex KeyType
+
+	for ; entryIndex < length; entryIndex++ {
+		if t.entries[entryIndex] != nil {
+			entryTs := t.retrieveTimestampFromEntry(t.entries[entryIndex])
 
 			if currentTs-entryTs > entryExpiresIn {
 				t.delete(entryIndex)
