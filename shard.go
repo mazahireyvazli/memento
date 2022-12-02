@@ -41,8 +41,8 @@ func (t *shard[KeyType, ValueType]) retrieveTimestampFromEntry(entry ValueType) 
 
 func (t *shard[KeyType, ValueType]) Get(k KeyType) (v ValueType, found bool) {
 	t.mu.RLock()
+	defer t.mu.RUnlock()
 	i, found := t.data[k]
-	t.mu.RUnlock()
 
 	if found {
 		v, found = t.get(i)
