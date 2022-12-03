@@ -2,9 +2,7 @@ package memento
 
 import (
 	"bytes"
-	"fmt"
-	"math/rand"
-	"sync/atomic"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -18,17 +16,13 @@ var config = &MementoConfig{
 }
 
 func key(i int) string {
-	return fmt.Sprintf("key-%010d", i)
+	return "key-" + strconv.Itoa(i)
 }
 func parallelKey(threadID int, counter int) string {
-	return fmt.Sprintf("key-%04d-%06d", threadID, counter)
+	return "key-" + strconv.Itoa(threadID) + "-" + strconv.Itoa(counter)
 }
 func value() []byte {
 	return make([]byte, valueSize)
-}
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
 }
 
 func BenchmarkSet(b *testing.B) {
@@ -59,96 +53,5 @@ func BenchmarkGet(b *testing.B) {
 		if !bytes.Equal(v, value()) {
 			b.Fatalf("mismatch for provided key %s. expected %s, got %s", key(i), value(), v)
 		}
-	}
-}
-
-func BenchmarkDelete(b *testing.B) {
-	var memcache, _ = NewMemento[string](config)
-	defer memcache.Close()
-
-	for i := 0; i < b.N; i++ {
-		memcache.Set(key(i), value())
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		memcache.Delete(key(i))
-	}
-
-	if memcache.Length() != 0 {
-		b.Fatal("all items should've been deleted")
-	}
-}
-
-func BenchmarkParallelSet(b *testing.B) {
-	var memcache, _ = NewMemento[string](config)
-	defer memcache.Close()
-
-	b.ResetTimer()
-	var i int64
-	b.RunParallel(func(pb *testing.PB) {
-		id := int(atomic.AddInt64(&i, 1))
-		c := id * b.N
-		for ; pb.Next(); c++ {
-			memcache.Set(parallelKey(id, c), value())
-		}
-	})
-}
-
-func BenchmarkParallelGet(b *testing.B) {
-	var memcache, _ = NewMemento[string](config)
-	defer memcache.Close()
-
-	var i int64
-	b.RunParallel(func(pb *testing.PB) {
-		id := int(atomic.AddInt64(&i, 1))
-		c := id * b.N
-		for ; pb.Next(); c++ {
-			memcache.Set(parallelKey(id, c), value())
-		}
-	})
-
-	atomic.StoreInt64(&i, 0)
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		id := int(atomic.AddInt64(&i, 1))
-		c := id * b.N
-
-		for ; pb.Next(); c++ {
-			memcache.Get(parallelKey(id, c))
-		}
-	})
-}
-
-func BenchmarkParallelDelete(b *testing.B) {
-	var memcache, _ = NewMemento[string](config)
-	defer memcache.Close()
-
-	var i int64
-	b.RunParallel(func(pb *testing.PB) {
-		id := int(atomic.AddInt64(&i, 1))
-		c := id * b.N
-
-		for ; pb.Next(); c++ {
-			memcache.Set(parallelKey(id, c), value())
-		}
-	})
-	var lengthBeforeDelete = memcache.Length()
-
-	atomic.StoreInt64(&i, 0)
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		id := int(atomic.AddInt64(&i, 1))
-		c := id * b.N
-
-		for ; pb.Next(); c++ {
-			memcache.Delete(parallelKey(id, c))
-		}
-	})
-
-	var lengthAfterDelete = memcache.Length()
-
-	if !(lengthAfterDelete < lengthBeforeDelete) {
-		b.Fatal("most items should've been deleted")
 	}
 }
