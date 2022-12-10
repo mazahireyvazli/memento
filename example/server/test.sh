@@ -1,4 +1,4 @@
-hostname=mnvs
+hostname=localhost
 declare -A keyvaluemap
 
 put_cache() {
