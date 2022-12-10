@@ -1,5 +1,7 @@
 package memento
 
+import "unsafe"
+
 const (
 	fnvPrime64  = uint64(1099511628211)
 	fnvOffset64 = uint64(14695981039346656037)
@@ -25,4 +27,15 @@ func (t *Fnv1_64[P]) Sum64(p P) uint64 {
 	}
 
 	return hash
+}
+
+//go:noescape
+//go:linkname strhash runtime.strhash
+func strhash(p unsafe.Pointer, h uintptr) uint64
+
+type StrHash_64[P Hashable] struct{}
+
+func (t *StrHash_64[P]) Sum64(p P) uint64 {
+
+	return strhash(unsafe.Pointer(&p), 0)
 }
