@@ -72,6 +72,8 @@ func (t *shard[KeyType, ValueType]) delete(k KeyType) {
 }
 
 func (t *shard[KeyType, ValueType]) length() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return len(t.data)
 }
 
