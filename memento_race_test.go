@@ -4,10 +4,12 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mazahireyvazli/memento/utils"
 )
 
-func BenchmarkRaceSetAndGet(b *testing.B) {
-	var iter_num = b.N
+func TestRaceSetGetAndDelete(t *testing.T) {
+	const iter_num = 1_500_000
 
 	var memcache, _ = NewMemento[string](config)
 	defer memcache.Close()
@@ -17,43 +19,42 @@ func BenchmarkRaceSetAndGet(b *testing.B) {
 
 	go func() {
 		for c := 0; c < iter_num; c++ {
-			memcache.Set(parallelKey(c, c), value())
+			memcache.Set(utils.ParallelKey(c, c), utils.SimpleValue())
 		}
 
 		wg.Done()
 	}()
 
 	go func() {
-		time.Sleep(time.Millisecond * (time.Duration(iter_num / 5000)))
+		time.Sleep(time.Millisecond * 550)
 
 		var misses int
 
 		for c := 0; c < iter_num; c++ {
-			v, ok := memcache.Get(parallelKey(c, c))
+			v, ok := memcache.Get(utils.ParallelKey(c, c))
 
 			if v == nil || !ok {
 				misses++
 			}
 		}
 
-		b.Log("total misses", misses)
+		t.Log("total misses", misses)
 
 		wg.Done()
 	}()
 
 	go func() {
-		time.Sleep(time.Millisecond * (time.Duration(iter_num / 5000)))
-		b.Log("total items in cache before delete", memcache.Length())
+		time.Sleep(time.Millisecond * 750)
+		t.Log("total items in cache before delete", memcache.Length())
 
 		for c := 0; c < iter_num; c++ {
-			memcache.Delete(parallelKey(c, c))
+			memcache.Delete(utils.ParallelKey(c, c))
 		}
 
-		b.Log("total items in cache after delete", memcache.Length())
+		t.Log("total items in cache after delete", memcache.Length())
 
 		wg.Done()
 	}()
 
 	wg.Wait()
-
 }

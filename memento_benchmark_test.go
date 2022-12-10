@@ -2,12 +2,11 @@ package memento
 
 import (
 	"bytes"
-	"strconv"
 	"testing"
 	"time"
-)
 
-const valueSize = 100 // in bytes
+	"github.com/mazahireyvazli/memento/utils"
+)
 
 var config = &MementoConfig{
 	ShardNum:       1 << 10,
@@ -15,43 +14,37 @@ var config = &MementoConfig{
 	EntryExpiresIn: time.Minute * 1,
 }
 
-func key(i int) string {
-	return "key-" + strconv.Itoa(i)
-}
-func parallelKey(threadID int, counter int) string {
-	return "key-" + strconv.Itoa(threadID) + "-" + strconv.Itoa(counter)
-}
-func value() []byte {
-	return make([]byte, valueSize)
-}
-
-func BenchmarkSet(b *testing.B) {
+func BenchmarkMemento(b *testing.B) {
 	var memcache, _ = NewMemento[string](config)
 	defer memcache.Close()
 
-	for i := 0; i < b.N; i++ {
-		memcache.Set(key(i), value())
-	}
-}
-
-func BenchmarkGet(b *testing.B) {
-	var memcache, _ = NewMemento[string](config)
-	defer memcache.Close()
-
-	for i := 0; i < b.N; i++ {
-		memcache.Set(key(i), value())
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		v, ok := memcache.Get(key(i))
-
-		if !ok || v == nil {
-			b.Fatalf("couldn't find entry for provided key %s", key(i))
+	b.Run("Set", func(b *testing.B) {
+		if utils.SkipDiscoveryRun(b) {
+			return
 		}
 
-		if !bytes.Equal(v, value()) {
-			b.Fatalf("mismatch for provided key %s. expected %s, got %s", key(i), value(), v)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			memcache.Set(utils.SimpleKey(i), utils.SimpleValue())
 		}
-	}
+	})
+
+	b.Run("Get", func(b *testing.B) {
+		if utils.SkipDiscoveryRun(b) {
+			return
+		}
+
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			v, ok := memcache.Get(utils.SimpleKey(i))
+
+			if !ok || v == nil {
+				b.Fatalf("couldn't find entry for provided key %s", utils.SimpleKey(i))
+			}
+
+			if !bytes.Equal(v, utils.SimpleValue()) {
+				b.Fatalf("mismatch for provided key %s. expected %s, got %s", utils.SimpleKey(i), utils.SimpleValue(), v)
+			}
+		}
+	})
 }

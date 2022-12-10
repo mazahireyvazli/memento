@@ -3,6 +3,8 @@ package memento
 import (
 	"sync/atomic"
 	"testing"
+
+	"github.com/mazahireyvazli/memento/utils"
 )
 
 func BenchmarkParallelSet(b *testing.B) {
@@ -15,7 +17,7 @@ func BenchmarkParallelSet(b *testing.B) {
 		id := int(atomic.AddInt64(&i, 1) - 1)
 
 		for c := 0; pb.Next(); c++ {
-			memcache.Set(parallelKey(id, c), value())
+			memcache.Set(utils.ParallelKey(id, c), utils.SimpleValue())
 		}
 	})
 }
@@ -29,7 +31,7 @@ func BenchmarkParallelGet(b *testing.B) {
 		id := int(atomic.AddInt64(&i, 1) - 1)
 
 		for c := 0; pb.Next(); c++ {
-			memcache.Set(parallelKey(id, c), value())
+			memcache.Set(utils.ParallelKey(id, c), utils.SimpleValue())
 		}
 	})
 
@@ -39,7 +41,7 @@ func BenchmarkParallelGet(b *testing.B) {
 		id := int(atomic.AddInt64(&i, 1) - 1)
 
 		for c := 0; pb.Next(); c++ {
-			memcache.Get(parallelKey(id, c))
+			memcache.Get(utils.ParallelKey(id, c))
 		}
 	})
 }

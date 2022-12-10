@@ -3,6 +3,8 @@ package memento
 import (
 	"sync/atomic"
 	"testing"
+
+	"github.com/mazahireyvazli/memento/utils"
 )
 
 func BenchmarkDelete(b *testing.B) {
@@ -10,12 +12,12 @@ func BenchmarkDelete(b *testing.B) {
 	defer memcache.Close()
 
 	for i := 0; i < b.N; i++ {
-		memcache.Set(key(i), value())
+		memcache.Set(utils.SimpleKey(i), utils.SimpleValue())
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		memcache.Delete(key(i))
+		memcache.Delete(utils.SimpleKey(i))
 	}
 
 	if memcache.Length() != 0 {
@@ -32,7 +34,7 @@ func BenchmarkParallelDelete(b *testing.B) {
 		id := int(atomic.AddInt64(&i, 1) - 1)
 
 		for c := 0; pb.Next(); c++ {
-			memcache.Set(parallelKey(id, c), value())
+			memcache.Set(utils.ParallelKey(id, c), utils.SimpleValue())
 		}
 	})
 	var lengthBeforeDelete = memcache.Length()
@@ -43,13 +45,11 @@ func BenchmarkParallelDelete(b *testing.B) {
 		id := int(atomic.AddInt64(&i, 1) - 1)
 
 		for c := 0; pb.Next(); c++ {
-			memcache.Delete(parallelKey(id, c))
+			memcache.Delete(utils.ParallelKey(id, c))
 		}
 	})
 
-	var lengthAfterDelete = memcache.Length()
-
-	if !(lengthAfterDelete < lengthBeforeDelete) {
+	if !(memcache.Length() < lengthBeforeDelete) {
 		b.Fatal("most items should've been deleted")
 	}
 }
