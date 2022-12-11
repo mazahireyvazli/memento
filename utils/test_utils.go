@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 	"unsafe"
 )
 
@@ -22,16 +21,13 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var src = rand.NewSource(time.Now().UnixNano())
-
-// Modified
+// Modified for thread safety
 // original source: @icza - https://stackoverflow.com/a/31832326/1235621
 func RandBytes(n int) []byte {
 	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
+			cache, remain = rand.Int63(), letterIdxMax
 		}
 		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
 			b[i] = letterBytes[idx]
@@ -72,10 +68,10 @@ func PrepareTestData(b *testing.B) map[string][]byte {
 }
 
 func SimpleKey(i int) string {
-	return "key-" + strconv.Itoa(i)
+	return "key-" + strconv.Itoa(i) + "-key"
 }
 func ParallelKey(threadID int, counter int) string {
-	return "key-" + strconv.Itoa(threadID) + "-" + strconv.Itoa(counter)
+	return "key-" + strconv.Itoa(threadID) + "-" + strconv.Itoa(counter) + "-key"
 }
 func SimpleValue() []byte {
 	return make([]byte, valueSize)
